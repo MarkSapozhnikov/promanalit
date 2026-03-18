@@ -18,13 +18,23 @@ app.use("/uploads", express.static("uploads"));
 
 const upload = multer({ dest: "uploads/" });
 
-const BOT_TOKEN = "8600708302:AAE_1XNRslzSIUetgTbZJg707kIS4rAYRcQ";
-const CHAT_ID = "608455063";
+const TELEGRAM_BOT_TOKEN = "8600708302:AAE_1XNRslzSIUetgTbZJg707kIS4rAYRcQ";
+const TELEGRAM_CHAT_ID = "608455063";
 
 const requests = {};
 
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
+
+        const formData = new FormData();
+    formData.append("chat_id", TELEGRAM_CHAT_ID);
+    formData.append("document", fs.createReadStream(file.path));
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
+    method: "POST",
+    body: formData,
+    });
+    
     const id = generateId();
 
     requests[id] = {
