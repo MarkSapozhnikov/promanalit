@@ -1,10 +1,9 @@
 import express from "express";
 import multer from "multer";
-import fetch from "node-fetch";
+import axios from "axios";
 import FormData from "form-data";
 import fs from "fs";
 import cors from "cors";
-import axios from "axios";
 import path from "path";
 
 function generateId() {
@@ -39,7 +38,7 @@ const TELEGRAM_CHAT_ID = "608455063";
 const requests = {};
 
 //
-// 📩 Отправка файла в Telegram
+// 📩 Отправка файла в Telegram (ФИНАЛЬНЫЙ ПРАВИЛЬНЫЙ ВАРИАНТ)
 //
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
@@ -51,18 +50,24 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
     };
 
     const form = new FormData();
+
     form.append("chat_id", TELEGRAM_CHAT_ID);
     form.append("caption", `ID: ${id}`);
-    form.append("document", fs.createReadStream(req.file.path), {
-      filename: req.file.originalname || "file.pdf",
-      contentType: "application/pdf",
-    });
+
+    // 🔥 КЛЮЧЕВОЙ ФИКС
+    form.append(
+      "document",
+      fs.createReadStream(req.file.path),
+      req.file.originalname || "file.pdf"
+    );
 
     await axios.post(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
       form,
       {
         headers: form.getHeaders(),
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
       }
     );
 
@@ -81,7 +86,7 @@ app.get("/api/status/:id", (req, res) => {
 });
 
 //
-// 📥 Ручной ответ (если нужно)
+// 📥 Ручной ответ
 //
 app.post("/api/answer", upload.single("file"), (req, res) => {
   const id = req.body.id;
@@ -95,7 +100,7 @@ app.post("/api/answer", upload.single("file"), (req, res) => {
 });
 
 //
-// 🤖 Webhook от Telegram
+// 🤖 Webhook от Telegram (прием ответа)
 //
 app.post("/telegram-webhook", async (req, res) => {
   try {
@@ -113,23 +118,25 @@ app.post("/telegram-webhook", async (req, res) => {
     if (!fileId) return res.sendStatus(200);
 
     // получаем путь файла
-    const fileRes = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`
+    const fileRes = await axios.get(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile`,
+      {
+        params: { file_id: fileId },
+      }
     );
-    const fileData = await fileRes.json();
 
-    const filePath = fileData.result.file_path;
+    const filePath = fileRes.data.result.file_path;
     const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`;
 
     // скачиваем файл
-    const response = await fetch(fileUrl);
-    const buffer = await response.arrayBuffer();
+    const response = await axios.get(fileUrl, {
+      responseType: "arraybuffer",
+    });
 
-    // сохраняем как PDF
     const fileName = `result_${Date.now()}.pdf`;
     const fullPath = `uploads/${fileName}`;
 
-    fs.writeFileSync(fullPath, Buffer.from(buffer));
+    fs.writeFileSync(fullPath, response.data);
 
     // записываем результат
     requests[id] = {
@@ -148,7 +155,7 @@ app.post("/telegram-webhook", async (req, res) => {
 // 🧪 тест
 //
 app.get("/test", (req, res) => {
-  res.send("NEW VERSION FIXED PDF");
+  res.send("NEW VERSION FINAL");
 });
 
 //
