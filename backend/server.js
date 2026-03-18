@@ -5,7 +5,7 @@ import FormData from "form-data";
 import fs from "fs";
 import cors from "cors";
 import axios from "axios";
-
+import path from "path";
 
 function generateId() {
   return Date.now().toString();
@@ -18,14 +18,29 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-const upload = multer({ dest: "uploads/" });
+// создаем папку если нет
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
-const TELEGRAM_BOT_TOKEN = "8600708302:AAE_1XNRslzSIUetgTbZJg707kIS4rAYRcQ";
+// настройка multer (сохраняем с оригинальным именем)
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || ".pdf";
+    cb(null, Date.now() + ext);
+  },
+});
+const upload = multer({ storage });
+
+const TELEGRAM_BOT_TOKEN = "ТВОЙ_НОВЫЙ_ТОКЕН"; // ⚠️ обязательно замени
 const TELEGRAM_CHAT_ID = "608455063";
 
 const requests = {};
 
+//
 // 📩 Отправка файла в Telegram
+//
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
     const id = generateId();
@@ -35,33 +50,39 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
       result: null,
     };
 
+    const form = new FormData();
+    form.append("chat_id", TELEGRAM_CHAT_ID);
+    form.append("caption", `ID: ${id}`);
+    form.append("document", fs.createReadStream(req.file.path), {
+      filename: req.file.originalname || "file.pdf",
+      contentType: "application/pdf",
+    });
+
     await axios.post(
-    `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
-    {
-        chat_id: TELEGRAM_CHAT_ID,
-        caption: `ID: ${id}`,
-        document: fs.createReadStream(req.file.path),
-    },
-    {
-        headers: {
-        "Content-Type": "multipart/form-data",
-        },
-    }
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
+      form,
+      {
+        headers: form.getHeaders(),
+      }
     );
 
     res.json({ id });
   } catch (err) {
-    console.error("❌ Telegram send error:", err);
+    console.error("❌ Telegram send error:", err.response?.data || err);
     res.status(500).json({ error: "Ошибка отправки" });
   }
 });
 
+//
 // 📊 Проверка статуса
+//
 app.get("/api/status/:id", (req, res) => {
   res.json(requests[req.params.id] || {});
 });
 
-// 📥 Ручной ответ (если будешь использовать)
+//
+// 📥 Ручной ответ (если нужно)
+//
 app.post("/api/answer", upload.single("file"), (req, res) => {
   const id = req.body.id;
 
@@ -73,7 +94,9 @@ app.post("/api/answer", upload.single("file"), (req, res) => {
   res.json({ ok: true });
 });
 
-// 🤖 Webhook от Telegram (ответ файлом)
+//
+// 🤖 Webhook от Telegram
+//
 app.post("/telegram-webhook", async (req, res) => {
   try {
     const message = req.body.message;
@@ -102,7 +125,8 @@ app.post("/telegram-webhook", async (req, res) => {
     const response = await fetch(fileUrl);
     const buffer = await response.arrayBuffer();
 
-    const fileName = `result_${Date.now()}.dat`;
+    // сохраняем как PDF
+    const fileName = `result_${Date.now()}.pdf`;
     const fullPath = `uploads/${fileName}`;
 
     fs.writeFileSync(fullPath, Buffer.from(buffer));
@@ -120,9 +144,14 @@ app.post("/telegram-webhook", async (req, res) => {
   }
 });
 
+//
+// 🧪 тест
+//
 app.get("/test", (req, res) => {
-  res.send("NEW VERSION 123");
+  res.send("NEW VERSION FIXED PDF");
 });
 
+//
 // 🚀 запуск
+//
 app.listen(PORT, () => console.log("🚀 Server started on", PORT));
