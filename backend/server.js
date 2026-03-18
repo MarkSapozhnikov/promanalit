@@ -9,6 +9,8 @@ function generateId() {
   return Date.now().toString();
 }
 
+const PORT = process.env.PORT || 3001;
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -64,40 +66,46 @@ app.post("/api/answer", upload.single("file"), (req, res) => {
 
 app.listen(3001, () => console.log("🚀 Server started"));
 
-app.post("/telegram-webhook", upload.single("document"), async (req, res) => {
+app.post("/telegram-webhook", async (req, res) => {
   try {
     const message = req.body.message;
 
-    if (!message || !message.reply_to_message) return res.sendStatus(200);
+    // если это не ответ — игнорируем
+    if (!message || !message.reply_to_message) {
+      return res.sendStatus(200);
+    }
 
     const caption = message.reply_to_message.caption;
 
-    // достаем ID
+    // достаем ID заявки
     const id = caption?.match(/ID: (.+)/)?.[1];
     if (!id) return res.sendStatus(200);
 
-    // файл от тебя
-    const fileId = message.document.file_id;
+    const fileId = message.document?.file_id;
+    if (!fileId) return res.sendStatus(200);
 
-    // получаем файл от Telegram
-    const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+    // получаем путь файла
+    const fileRes = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`
+    );
     const fileData = await fileRes.json();
 
     const filePath = fileData.result.file_path;
     const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
 
     // скачиваем файл
-    const fileStream = await fetch(fileUrl);
+    const response = await fetch(fileUrl);
+    const buffer = await response.arrayBuffer();
+
     const fileName = `result_${Date.now()}.dat`;
-    const fileFullPath = `uploads/${fileName}`;
+    const fullPath = `uploads/${fileName}`;
 
-    const buffer = await fileStream.arrayBuffer();
-    fs.writeFileSync(fileFullPath, Buffer.from(buffer));
+    fs.writeFileSync(fullPath, Buffer.from(buffer));
 
-    // сохраняем результат
+    // записываем результат
     requests[id] = {
       status: "done",
-      result: `http://localhost:3001/${fileFullPath}`,
+      result: `https://ТВОЙ_ДОМЕН/${fullPath}`,
     };
 
     res.sendStatus(200);
