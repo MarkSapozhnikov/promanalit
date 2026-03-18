@@ -23,6 +23,7 @@ const TELEGRAM_CHAT_ID = "608455063";
 
 const requests = {};
 
+// 📩 Отправка файла в Telegram
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
     const id = generateId();
@@ -44,15 +45,17 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
 
     res.json({ id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Ошибка" });
+    console.error("❌ Telegram send error:", err);
+    res.status(500).json({ error: "Ошибка отправки" });
   }
 });
 
+// 📊 Проверка статуса
 app.get("/api/status/:id", (req, res) => {
   res.json(requests[req.params.id] || {});
 });
 
+// 📥 Ручной ответ (если будешь использовать)
 app.post("/api/answer", upload.single("file"), (req, res) => {
   const id = req.body.id;
 
@@ -64,20 +67,16 @@ app.post("/api/answer", upload.single("file"), (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => console.log("🚀 Server started"));
-
+// 🤖 Webhook от Telegram (ответ файлом)
 app.post("/telegram-webhook", async (req, res) => {
   try {
     const message = req.body.message;
 
-    // если это не ответ — игнорируем
     if (!message || !message.reply_to_message) {
       return res.sendStatus(200);
     }
 
     const caption = message.reply_to_message.caption;
-
-    // достаем ID заявки
     const id = caption?.match(/ID: (.+)/)?.[1];
     if (!id) return res.sendStatus(200);
 
@@ -105,12 +104,15 @@ app.post("/telegram-webhook", async (req, res) => {
     // записываем результат
     requests[id] = {
       status: "done",
-      result: `https://ТВОЙ_ДОМЕН/${fullPath}`,
+      result: `https://promanalit.onrender.com/uploads/${fileName}`,
     };
 
     res.sendStatus(200);
   } catch (e) {
-    console.error(e);
+    console.error("❌ Webhook error:", e);
     res.sendStatus(200);
   }
 });
+
+// 🚀 запуск
+app.listen(PORT, () => console.log("🚀 Server started on", PORT));
