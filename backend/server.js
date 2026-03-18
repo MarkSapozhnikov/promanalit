@@ -35,7 +35,9 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
 
     const formData = new FormData();
     formData.append("chat_id", TELEGRAM_CHAT_ID);
-    formData.append("document", fs.createReadStream(req.file.path));
+    formData.append("document", fs.createReadStream(req.file.path), {
+        filename: req.file.originalname,
+    });
     formData.append("caption", `ID: ${id}`);
 
     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
