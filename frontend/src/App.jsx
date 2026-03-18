@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, UploadCloud, FileText } from "lucide-react";
+import { Loader2, UploadCloud, FileCheck2 } from "lucide-react";
 
 const MAX_FILE_SIZE_MB = 25;
 
@@ -12,7 +12,7 @@ async function submit(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("https://ТВОЙ-БЭКЕНД.onrender.com/api/analysis-request", {
+  const res = await fetch("https://promanalit.onrender.com/api/analysis-request", {
     method: "POST",
     body: formData,
   });
@@ -42,7 +42,7 @@ export default function App() {
 
     const interval = setInterval(async () => {
       const res = await fetch(
-        `https://ТВОЙ-БЭКЕНД.onrender.com/api/status/${requestId}`
+        `https://promanalit.onrender.com/api/status/${requestId}`
       );
       const data = await res.json();
 
@@ -64,15 +64,12 @@ export default function App() {
           Анализ чертежей металлоконструкций
         </p>
 
-        {/* DROP ZONE */}
         <div
-          className="dropzone"
+          className={`dropzone ${file ? "active" : ""}`}
           onClick={() => inputRef.current.click()}
         >
-          <UploadCloud size={40} />
-          <p>
-            {file ? file.name : "Загрузите файл или нажмите"}
-          </p>
+          <UploadCloud size={42} />
+          <p>{file ? file.name : "Перетащите или нажмите для загрузки"}</p>
           <span>PDF, DWG, DXF до 25MB</span>
 
           <input
@@ -83,29 +80,22 @@ export default function App() {
           />
         </div>
 
-        {/* BUTTON */}
         {stage === "idle" && (
-          <button
-            className="main-btn"
-            onClick={send}
-            disabled={!valid}
-          >
+          <button className="main-btn" onClick={send} disabled={!valid}>
             Отправить на анализ
           </button>
         )}
 
-        {/* LOADING */}
         {stage === "loading" && (
           <div className="loader">
             <Loader2 className="spin" />
-            <p>Идет анализ...</p>
+            <p>Анализируем чертёж...</p>
           </div>
         )}
 
-        {/* RESULT */}
         {stage === "done" && (
           <div className="result">
-            <FileText size={40} />
+            <FileCheck2 size={42} />
             <p>Анализ готов</p>
             <a href={result} target="_blank" className="download">
               Скачать результат
