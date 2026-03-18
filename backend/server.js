@@ -25,16 +25,6 @@ const requests = {};
 
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
-
-        const formData = new FormData();
-    formData.append("chat_id", TELEGRAM_CHAT_ID);
-    formData.append("document", fs.createReadStream(file.path));
-
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
-    method: "POST",
-    body: formData,
-    });
-    
     const id = generateId();
 
     requests[id] = {
@@ -42,14 +32,14 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
       result: null,
     };
 
-    const form = new FormData();
-    form.append("chat_id", CHAT_ID);
-    form.append("document", fs.createReadStream(req.file.path));
-    form.append("caption", `ID: ${id}`);
+    const formData = new FormData();
+    formData.append("chat_id", TELEGRAM_CHAT_ID);
+    formData.append("document", fs.createReadStream(req.file.path));
+    formData.append("caption", `ID: ${id}`);
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
       method: "POST",
-      body: form,
+      body: formData,
     });
 
     res.json({ id });
@@ -68,13 +58,13 @@ app.post("/api/answer", upload.single("file"), (req, res) => {
 
   requests[id] = {
     status: "done",
-    result: `http://localhost:3001/uploads/${req.file.filename}`,
+    result: `https://promanalit.onrender.com/uploads/${req.file.filename}`,
   };
 
   res.json({ ok: true });
 });
 
-app.listen(3001, () => console.log("🚀 Server started"));
+app.listen(PORT, () => console.log("🚀 Server started"));
 
 app.post("/telegram-webhook", async (req, res) => {
   try {
@@ -96,12 +86,12 @@ app.post("/telegram-webhook", async (req, res) => {
 
     // получаем путь файла
     const fileRes = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`
     );
     const fileData = await fileRes.json();
 
     const filePath = fileData.result.file_path;
-    const fileUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`;
+    const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`;
 
     // скачиваем файл
     const response = await fetch(fileUrl);
