@@ -5,6 +5,10 @@ import FormData from "form-data";
 import fs from "fs";
 import cors from "cors";
 
+
+import axios from "axios";
+import fs from "fs";
+
 function generateId() {
   return Date.now().toString();
 }
@@ -33,20 +37,19 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
       result: null,
     };
 
-    const formData = new FormData();
-    formData.append("chat_id", TELEGRAM_CHAT_ID);
-    const fileBuffer = fs.readFileSync(req.file.path);
-
-    formData.append("document", fileBuffer, {
-        filename: req.file.originalname,
-        contentType: "application/pdf",
-    });
-    formData.append("caption", `ID: ${id}`);
-
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
-      method: "POST",
-      body: formData,
-    });
+    await axios.post(
+    `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`,
+    {
+        chat_id: TELEGRAM_CHAT_ID,
+        caption: `ID: ${id}`,
+        document: fs.createReadStream(req.file.path),
+    },
+    {
+        headers: {
+        "Content-Type": "multipart/form-data",
+        },
+    }
+    );
 
     res.json({ id });
   } catch (err) {
