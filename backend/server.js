@@ -35,8 +35,11 @@ app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
 
     const formData = new FormData();
     formData.append("chat_id", TELEGRAM_CHAT_ID);
-    formData.append("document", fs.createReadStream(req.file.path), {
+    const fileBuffer = fs.readFileSync(req.file.path);
+
+    formData.append("document", fileBuffer, {
         filename: req.file.originalname,
+        contentType: "application/pdf",
     });
     formData.append("caption", `ID: ${id}`);
 
