@@ -122,5 +122,9 @@ app.post("/telegram-webhook", async (req, res) => {
   }
 });
 
+app.get("/test", (req, res) => {
+  res.send("NEW VERSION 123");
+});
+
 // 🚀 запуск
 app.listen(PORT, () => console.log("🚀 Server started on", PORT));
