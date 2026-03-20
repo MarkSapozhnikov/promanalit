@@ -171,7 +171,7 @@ export default function App() {
         <div className="container">
           <div className="section-header">
             <h2>Почему выбирают нас</h2>
-            <p>Современные решения для анализа металлоконструкций</p>
+            <p>Современные решения для анализа чертежей</p>
           </div>
           
           <div className="features-grid">
@@ -180,7 +180,7 @@ export default function App() {
                 <Shield size={32} />
               </div>
               <h3>Точность анализа</h3>
-              <p>Нейросети обеспечивают высокую точность распознавания элементов металлоконструкций</p>
+              <p>Нейросети обеспечивают высокую точность распознавания чертежей</p>
             </div>
             
             <div className="feature-card">
@@ -214,7 +214,7 @@ export default function App() {
             <div className="step-item">
               <div className="step-number">1</div>
               <h3>Загрузка</h3>
-              <p>Загрузите чертеж металлоконструкции в любом поддерживаемом формате</p>
+              <p>Загрузите чертеж изделия в любом поддерживаемом формате</p>
             </div>
             
             <div className="step-item">
@@ -246,16 +246,7 @@ export default function App() {
               <p className="about-text">
                 Наша миссия — ускорить сборку ж/б изделий, снизить количество ошибок и повысить эффективность работы низкоквалифицированных сотрудников.
               </p>
-              <div className="about-features">
-                <div className="about-feature">
-                  <Users size={20} />
-                  <span>Более 500 довольных клиентов</span>
-                </div>
-                <div className="about-feature">
-                  <Shield size={20} />
-                  <span>Гарантия конфиденциальности</span>
-                </div>
-              </div>
+            
             </div>
             <div className="about-stats">
               <div className="stat-card">
