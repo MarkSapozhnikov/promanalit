@@ -142,7 +142,7 @@ export default function App() {
                   <Loader2 className="spin" size={48} />
                   <div className="loader-text">
                     <h4>Идет анализ...</h4>
-                    <p>По заверению анализа вы сможете скачать результат</p>
+                    <p>По завершению анализа вы сможете скачать результат</p>
                   </div>
                 </div>
               )}
