@@ -45,9 +45,6 @@ const TELEGRAM_CHAT_ID = "320324700";
 
 const requests = {};
 
-//
-// 📩 Отправка файла в Telegram (ФИНАЛЬНЫЙ ПРАВИЛЬНЫЙ ВАРИАНТ)
-//
 app.post("/api/analysis-request", upload.single("file"), async (req, res) => {
   try {
     const id = generateId();
