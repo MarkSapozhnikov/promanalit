@@ -40,7 +40,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const TELEGRAM_BOT_TOKEN = "8600708302:AAE_1XNRslzSIUetgTbZJg707kIS4rAYRcQ";
-const TELEGRAM_CHAT_ID = "608455063";
+// const TELEGRAM_CHAT_ID = "608455063";
+const TELEGRAM_CHAT_ID = "761200021";
 
 const requests = {};
 
